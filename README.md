@@ -1,5 +1,6 @@
 # CSSdeep
 Author: Sakshi Saxena, Aditi
+<br>
 Cooperative Spectrum Sensing (CSS) is pivotal to the development of robust cognitive radio networks, particularly under challenging signal conditions like Rayleigh fading and additive white Gaussian noise (AWGN). While existing approaches have leveraged traditional energy detection or basic machine learning, their reliability in low signal-to-noise ratio (SNR) environments remains limited. This necessitates the development of deep learning-based models that can generalize effectively across diverse and dynamic channel conditions without requiring prior knowledge of the primary user’s signal characteristics.
-
+<br>
 This project aims to enhance detection reliability in CSS by designing and evaluating deep learning architectures that exploit both spatial and temporal features extracted from energy statistics and covariance matrices of multiple secondary users. Specifically, the study compares the performance of Convolutional Neural Networks (CNN), Long Short-Term Memory (LSTM) networks, and a hybrid CNN-LSTM model for signal classification and detection accuracy across a range of SNR values. The architecture is optimized to improve generalization in Rayleigh fading environments, with the CNN-LSTM hybrid model designed to leverage spatial-temporal feature learning for greater robustness in noisy conditions. This design ensures a balanced trade-off between detection probability and false alarm rate, even in adverse channel conditions.
