@@ -1,0 +1,73 @@
+% Cooperative Spectrum Sensing Data Generator (Realistic Version)
+clear all; close all; clc;
+
+%% Parameters
+num_samples = 15000;
+num_SUs = 5;
+SNR_dB = -20:2:10;
+num_SNR = length(SNR_dB);
+modulation_type = 'QPSK';
+num_trials = 1000;
+signal_present_prob = 0.5;
+rng(42); % Reproducibility
+
+% Data storage
+energy_matrix = zeros(num_SNR, num_trials, num_SUs);
+covariance_matrices = zeros(num_SUs, num_SUs, num_SNR, num_trials);
+target_vector = rand(num_SNR, num_trials) < signal_present_prob;
+
+disp('Generating sensing data across SNRs...');
+for snr_idx = 1:num_SNR
+    current_SNR = SNR_dB(snr_idx);
+    linear_SNR = 10^(current_SNR / 10);
+    signal_scaling = sqrt(linear_SNR);
+    noise_power = 1;
+    noise_std = sqrt(noise_power);
+
+    for trial = 1:num_trials
+        % Regenerate PU signal every trial
+        if strcmp(modulation_type, 'QPSK')
+            bit_stream = randi([0, 1], 1, num_samples * 2);
+            bit_pairs = reshape(bit_stream, 2, [])';
+            symbol_indices = bi2de(bit_pairs);
+            pu_signal = exp(1j * (symbol_indices * pi/2 + pi/4)).';
+        elseif strcmp(modulation_type, 'BPSK')
+            bit_stream = randi([0, 1], 1, num_samples);
+            pu_signal = 2 * bit_stream - 1;
+        else
+            error('Unsupported modulation type');
+        end
+        pu_signal = pu_signal / sqrt(mean(abs(pu_signal).^2));  % Normalize
+
+        su_observations = zeros(num_SUs, length(pu_signal));
+        for su = 1:num_SUs
+            % Realistic Rayleigh fading
+            h = (randn(1, 1) + 1j * randn(1, 1)) / sqrt(2); % Complex fading
+
+            noise = noise_std * (randn(size(pu_signal)) + 1j * randn(size(pu_signal))) / sqrt(2);
+            if target_vector(snr_idx, trial) == 1
+                % Signal + Rayleigh fading + noise
+                su_observations(su, :) = h * (signal_scaling * pu_signal) + noise;
+            else
+                % Optional interference for realism
+                interference = 0.1 * (randn(size(pu_signal)) + 1j * randn(size(pu_signal))) / sqrt(2);
+                su_observations(su, :) = noise + interference;
+            end
+        end
+
+        % Energy detection
+        for su = 1:num_SUs
+            energy_matrix(snr_idx, trial, su) = mean(abs(su_observations(su, :)).^2);
+        end
+
+        % Covariance matrix
+        covariance_matrices(:, :, snr_idx, trial) = (su_observations * su_observations') / num_samples;
+    end
+end
+
+disp('Data generation completed.');
+
+save('Bspectrum_sensing_dataset.mat', ...
+    'energy_matrix', 'covariance_matrices', ...
+    'target_vector', 'SNR_dB', '-v7.3');
+
